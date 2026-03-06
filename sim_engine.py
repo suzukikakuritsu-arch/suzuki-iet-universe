@@ -1,14 +1,14 @@
+import matplotlib
+matplotlib.use('Agg')  # サーバー上での描画エラーを防ぐ設定
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-import os
 
-# 1600の記事＝知性の粒子
+# 知性の粒子数（最新の重みに同期）
 N = 1600
 TIME_STEPS = 120
 PHI = (1 + np.sqrt(5)) / 2
 
-# 11次元から3次元への射影
 def project_11d_to_3d():
     p11 = np.random.normal(0, 1, (N, 11))
     proj_mat = np.array([
@@ -30,19 +30,23 @@ def update(frame):
     ax.clear()
     ax.set_axis_off()
     
-    # 中心への引力（情報の集束）
+    # 中心（起点）への強力な引き込み
     dist = np.linalg.norm(points, axis=1)[:, None] + 0.5
-    force = -2.0 * points / (dist**3)
+    force = -2.5 * points / (dist**3)
     vel += force
-    vel *= 0.95 # 摩擦
+    vel *= 0.92  # 適度な減衰で秩序を作る
     points += vel
     
-    # 描画
+    # 描画（速度に応じて色を変え、輝きを表現）
+    colors = np.linalg.norm(vel, axis=1)
     ax.scatter(points[:,0], points[:,1], points[:,2], 
-               c=np.linalg.norm(vel, axis=1), cmap='cool', s=2, alpha=0.6)
-    ax.view_init(elev=20, azim=frame * 2)
+               c=colors, cmap='plasma', s=2, alpha=0.7)
+    
+    # 視点のダイナミックな回転
+    ax.view_init(elev=20, azim=frame * 3)
     return ax,
 
+print("Generating Universe Evolution...")
 ani = FuncAnimation(fig, update, frames=TIME_STEPS, interval=50)
-# GitHub Actions上で保存
 ani.save('suzuki_universe_evolution.mp4', writer='ffmpeg', fps=30, dpi=100)
+print("Simulation complete.")
