@@ -1,10 +1,10 @@
 import matplotlib
-matplotlib.use('Agg')  # サーバー上での描画エラーを防ぐ設定
+matplotlib.use('Agg')
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-# 知性の粒子数（最新の重みに同期）
+# 1600の知性
 N = 1600
 TIME_STEPS = 120
 PHI = (1 + np.sqrt(5)) / 2
@@ -19,9 +19,10 @@ def project_11d_to_3d():
     p3 = p11 @ proj_mat.T
     return p3 / (np.linalg.norm(p3, axis=1)[:, None] + 1e-9)
 
-points = project_11d_to_3d() * 100
+points = project_11d_to_3d() * 120
 vel = np.zeros_like(points)
 
+# 背景を少しグレーに寄せるか迷いましたが、やはり漆黒の中で粒子を光らせるのが「情報の創発」に相応しいので、粒子側を強化します。
 fig = plt.figure(figsize=(10, 8), facecolor='black')
 ax = fig.add_subplot(111, projection='3d', facecolor='black')
 
@@ -30,23 +31,32 @@ def update(frame):
     ax.clear()
     ax.set_axis_off()
     
-    # 中心（起点）への強力な引き込み
+    # 物理法則
     dist = np.linalg.norm(points, axis=1)[:, None] + 0.5
-    force = -2.5 * points / (dist**3)
+    force = -3.0 * points / (dist**2.5) # 引き込みを少し強めに
     vel += force
-    vel *= 0.92  # 適度な減衰で秩序を作る
+    vel *= 0.94
     points += vel
     
-    # 描画（速度に応じて色を変え、輝きを表現）
-    colors = np.linalg.norm(vel, axis=1)
-    ax.scatter(points[:,0], points[:,1], points[:,2], 
-               c=colors, cmap='plasma', s=2, alpha=0.7)
+    # ビジュアル強化：速度に応じてサイズと色を変える
+    speed = np.linalg.norm(vel, axis=1)
     
-    # 視点のダイナミックな回転
-    ax.view_init(elev=20, azim=frame * 3)
+    # 彩度を高めるために 'hsv' や 'cyan' 系のグラデーションを使用
+    # s（サイズ）を大きくして、alpha（透明度）を調整
+    ax.scatter(points[:,0], points[:,1], points[:,2], 
+               c=speed, 
+               cmap='cyan_magenta', # カスタム的に明るい色を選択（あるいは 'winter' や 'spring'）
+               s=speed * 5 + 2,    # 動いている粒子ほど大きく輝く
+               alpha=0.8, 
+               edgecolors='none')
+    
+    # 視点の回転
+    ax.view_init(elev=25, azim=frame * 4)
     return ax,
 
-print("Generating Universe Evolution...")
+print("Generating Brighter Universe...")
+# cmapを 'winter' (青〜緑) にすると、よりサイバーで明るい印象になります
 ani = FuncAnimation(fig, update, frames=TIME_STEPS, interval=50)
-ani.save('suzuki_universe_evolution.mp4', writer='ffmpeg', fps=30, dpi=100)
-print("Simulation complete.")
+# dpiを上げると鮮明になります
+ani.save('suzuki_universe_evolution.mp4', writer='ffmpeg', fps=30, dpi=120)
+print("Bright Evolution Complete.")
