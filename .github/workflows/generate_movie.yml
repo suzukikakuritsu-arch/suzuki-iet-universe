@@ -2,29 +2,39 @@ name: Update Universe Movie
 on:
   push:
     branches: [ main ]
-  workflow_dispatch: # 手動実行ボタン用
+  workflow_dispatch:
 
 jobs:
   generate:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # 書き込み権限を明示
     steps:
       - uses: actions/checkout@v3
+
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
+
       - name: Install Tools
         run: |
           sudo apt-get install -y ffmpeg
           pip install numpy matplotlib
+
       - name: Run Simulation
         run: python sim_engine.py
+
       - name: Commit and Push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add suzuki_universe_evolution.mp4
-          git commit -m "Generated new universe movie" || exit 0
-          git push
+          # ファイルの存在を確認
+          if [ -f suzuki_universe_evolution.mp4 ]; then
+            git add -f suzuki_universe_evolution.mp4
+            git commit -m "Generated new universe movie [skip ci]" || echo "No changes"
+            git push origin main
+          else
+            echo "Movie file not found"
+            exit 1
+          fi
