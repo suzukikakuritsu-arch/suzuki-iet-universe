@@ -1,26 +1,30 @@
-name: Generate Cosmic Movie
+name: Update Universe Movie
 on:
   push:
     branches: [ main ]
+  workflow_dispatch: # 手動実行ボタン用
+
 jobs:
-  build:
+  generate:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.10'
-      - name: Install dependencies
+      - name: Install Tools
         run: |
           sudo apt-get install -y ffmpeg
-          pip install numpy matplotlib scikit-learn
+          pip install numpy matplotlib
       - name: Run Simulation
         run: python sim_engine.py
-      - name: Commit Movie
+      - name: Commit and Push
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git add suzuki_universe_evolution.mp4
-          git commit -m "Update Universe Evolution Movie" || exit 0
+          git commit -m "Generated new universe movie" || exit 0
           git push
